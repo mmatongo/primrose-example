@@ -1,5 +1,8 @@
 require 'sinatra'
 require 'primrose'
+require 'securerandom'
+
+enable :sessions
 
 # Create a new store
 store = Primrose::Store.new({todos: [{text: "Task 1", completed: false}, {text: "Task 2", completed: false}]})
@@ -14,6 +17,9 @@ before do
 end
 
 get '/' do
+  # Generate a nonce for the form
+  session[:nonce] = SecureRandom.hex(32)
+
   @store.state.follow do |state|
     @todos = state[:todos]
     puts "Current state of todos: #{@todos.inspect}"  # Debugging line
@@ -27,15 +33,21 @@ end
 
 
 post '/add_todo' do
-  new_todo = { text: params[:new_todo], completed: false }
-  puts "Adding new todo: #{new_todo}"
-  @store.dispatch(
-    type: 'ADD_TODO',
-    updates: {
-      todos: ->(todos) { todos + [new_todo] }
-    }
-  )
-  redirect '/'
+  if params[:nonce] == session[:nonce]
+    new_todo = { text: params[:new_todo], completed: false }
+    @store.dispatch(
+      type: 'ADD_TODO',
+      updates: {
+        todos: ->(todos) { todos + [new_todo] }
+      }
+    )
+    session[:nonce] = nil
+    redirect '/'
+  else
+    # Invalid request
+    status 403
+    "Forbidden"
+  end
 end
 
 post '/toggle_todo/:index' do

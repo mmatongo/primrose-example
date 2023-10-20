@@ -95,6 +95,7 @@
 
   <!-- Form to add new todo -->
   <form action="/add_todo" method="post">
+    <input type="hidden" name="nonce" value="<%= session[:nonce] %>">
     <%= text_field(name: "new_todo", placeholder: "Enter new todo") %> <!-- Using TextField component -->
     <%= button(label: "Add Todo", action: "this.form.submit()") %> <!-- Using Button component with tooltip -->
   </form>
