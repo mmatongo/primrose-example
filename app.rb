@@ -16,6 +16,9 @@ before do
   @store = store
 end
 
+# expose the public folder for static assets
+set :public_folder, 'public'
+
 get '/' do
   # Generate a nonce for the form
   session[:nonce] = SecureRandom.hex(32)
